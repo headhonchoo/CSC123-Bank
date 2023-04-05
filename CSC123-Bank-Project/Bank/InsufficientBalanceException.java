@@ -1,4 +1,4 @@
-package com.usman.csudh.bank.core;
+
 
 public class InsufficientBalanceException extends Exception {
 

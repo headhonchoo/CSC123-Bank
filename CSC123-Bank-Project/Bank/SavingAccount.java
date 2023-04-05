@@ -1,4 +1,4 @@
-package com.usman.csudh.bank.core;
+
 public class SavingAccount extends Account{
 	private static final long serialVersionUID = 1L;
 

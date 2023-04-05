@@ -1,4 +1,4 @@
-package com.usman.csudh.bank.core;
+
 import java.io.Serializable;
 
 public class CheckingAccount extends Account implements Serializable{

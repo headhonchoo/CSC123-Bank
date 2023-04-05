@@ -1,12 +1,10 @@
-package com.usman.csudh.bank.net;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.server.ServerCloneException;
-
-import com.usman.csudh.bank.MainBank;
 
 public class NetworkListener {
 

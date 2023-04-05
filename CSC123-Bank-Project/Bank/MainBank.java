@@ -1,14 +1,6 @@
-package com.usman.csudh.bank;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.usman.csudh.bank.core.Account;
-import com.usman.csudh.bank.core.AccountClosedException;
-import com.usman.csudh.bank.core.Bank;
-import com.usman.csudh.bank.core.InsufficientBalanceException;
-import com.usman.csudh.bank.core.NoSuchAccountException;
-import com.usman.csudh.util.UIManager;
 
 public class MainBank {
 

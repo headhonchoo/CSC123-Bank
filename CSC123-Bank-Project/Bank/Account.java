@@ -1,10 +1,8 @@
-package com.usman.csudh.bank.core;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-
-import com.usman.csudh.util.UniqueCounter;
 
 public class Account implements Serializable {
 	

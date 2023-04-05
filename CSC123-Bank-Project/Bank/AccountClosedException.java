@@ -1,4 +1,4 @@
-package com.usman.csudh.bank.core;
+
 
 public class AccountClosedException extends Exception {
 

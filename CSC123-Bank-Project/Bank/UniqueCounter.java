@@ -1,4 +1,3 @@
-package com.usman.csudh.util;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Scanner;
