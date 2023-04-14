@@ -2,8 +2,8 @@
 public class SavingAccount extends Account{
 	private static final long serialVersionUID = 1L;
 
-	public SavingAccount(Customer customer) {
-		super("Saving", customer);
+	public SavingAccount(Customer customer, String currency) {
+		super("Saving", currency, customer);
 	}
 
 

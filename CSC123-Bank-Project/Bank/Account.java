@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -9,14 +8,16 @@ public class Account implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private String accountName;
 	private Customer accountHolder;
+	private String currency = "USD";
 	private ArrayList<Transaction> transactions;
 	
 	private boolean open=true;
 	private int accountNumber;
 
-	protected Account(String name, Customer customer) {
+	protected Account(String name, String currency, Customer customer) {
 		accountName=name;
 		accountHolder=customer;
+		this.currency = currency;
 		transactions=new ArrayList<Transaction>();
 		accountNumber=UniqueCounter.nextValue();
 	}
@@ -78,7 +79,12 @@ public class Account implements Serializable {
 	}
 
 	public String toString() {
-		String aName=accountNumber+"("+accountName+")"+" : "+accountHolder.toString()+ " : "+getBalance()+" : "+(open?"Account Open":"Account Closed");
+		String aName=accountNumber+"("+accountName+")"+" : "+
+				accountHolder.toString()+ " : " +
+				getAccountCurrency() + " : " +
+				getBalance() + " : " +
+				String.format("%.2f", MainBank.exchangeRates.get(getAccountCurrency()).currentToUSD(getBalance())) + " : " +
+				(open?"Account Open":"Account Closed");
 		return aName;
 	}
 	 
@@ -95,5 +101,27 @@ public class Account implements Serializable {
 		out.write(("Balance: "+getBalance()+"\n\n\n").getBytes());
 		out.flush();
 		
+	}
+
+	public void printInformation(OutputStream out) throws IOException {
+		out.write(("Account Number: " + String.valueOf(getAccountNumber()) + "\n").getBytes());
+		out.write(("Name: " +
+				getAccountHolder().getFirstName() + " " +
+				getAccountHolder().getLastName() + "\n").getBytes());
+		out.write(("SSN: " + getAccountHolder().getSSN() + "\n").getBytes());
+		out.write(("Currency: " + getAccountCurrency() + "\n").getBytes());
+		out.write(("Currency Balance: " + getAccountCurrency() + " " +
+				String.format("%.2f", getBalance()) + "\n").getBytes());
+		Exchange exchange = MainBank.exchangeRates.get(getAccountCurrency());
+		if (exchange != null) {
+			out.write(("USD Balance: " + "USD" + " " +
+					String.format("%.2f", MainBank.exchangeRates.get(getAccountCurrency()).currentToUSD(getBalance())) + "\n").getBytes());
+		} else {
+			out.write(("Error: currency cannot be converted to USD\n").getBytes());
+		}
+	}
+
+	private String getAccountCurrency() {
+		return currency;
 	}
 }

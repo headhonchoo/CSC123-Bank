@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -9,17 +8,24 @@ public class Bank {
 	
 	private static Map<Integer,Account> accounts=new TreeMap<Integer,Account>();
 	
-	public static Account openCheckingAccount(String firstName, String lastName, String ssn, double overdraftLimit) {
+	public static Account openCheckingAccount(String firstName,
+											  String lastName,
+											  String ssn,
+											  String currency,
+											  double overdraftLimit) {
 		Customer c=new Customer(firstName,lastName, ssn);
-		Account a=new CheckingAccount(c,overdraftLimit);
+		Account a=new CheckingAccount(c,currency, overdraftLimit);
 		accounts.put(a.getAccountNumber(), a);
 		return a;
 		
 	}
 	
-	public static Account openSavingAccount(String firstName, String lastName, String ssn) {
+	public static Account openSavingAccount(String firstName,
+											String lastName,
+											String ssn,
+											String currency) {
 		Customer c=new Customer(firstName,lastName, ssn);
-		Account a=new SavingAccount(c);
+		Account a=new SavingAccount(c, currency);
 		accounts.put(a.getAccountNumber(), a);
 		return a;
 		
@@ -67,14 +73,18 @@ public class Bank {
 		out.write((byte)10);
 		out.flush();
 	}
+
+	public static Map<Integer,Account> getAllAccounts() {
+		return accounts;
+	}
 	
-	public static void printAccountTransactions(int accountNumber, OutputStream out) throws IOException,NoSuchAccountException{
+	public static void printAccountTransactions(int accountNumber, OutputStream out) throws IOException,NoSuchAccountException {
 		
 		lookup(accountNumber).printTransactions(out);
 	}
-				
-	
-	
-	
-	
+
+
+	public static void printAccountInformation(int accountNumber, OutputStream out) throws IOException,NoSuchAccountException {
+		lookup(accountNumber).printInformation(out);
+	}
 }
