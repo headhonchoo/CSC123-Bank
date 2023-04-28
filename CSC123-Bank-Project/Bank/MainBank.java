@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MainBank {
+	// Cannot find location/dir of config.txt/ other files
 
 	// All messages are declared as constants to make it easier to change. Also, to
 	// ensure future proofing in case the application need to be made available
