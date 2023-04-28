@@ -1,4 +1,8 @@
 import java.io.*;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -8,6 +12,12 @@ public class MainBank {
 	// All messages are declared as constants to make it easier to change. Also, to
 	// ensure future proofing in case the application need to be made available
 	// in more than one languages
+	public static final String CONFIG_FILE = "config.txt";
+    public static final String SUPPORT_CURRENCIES_KEY = "support.currencies";
+    public static final String CURRENCIES_SOURCE_KEY = "currencies.source";
+    public static final String WEBSERVICE_URL_KEY = "webservice.url";
+    public static final String CURRENCY_FILE_KEY = "currency.file";
+    
 	public static final String MSG_ACCOUNT_OPENED = "%nAccount opened, account number is: %s%n%n";
 	public static final String MSG_ACCOUNT_CLOSED = "%nAccount number %s has been closed, balance is %s%n%n";
 	public static final String MSG_ACCOUNT_NOT_FOUND = "%nAccount number %s not found! %n%n";
@@ -39,51 +49,98 @@ public class MainBank {
 			"Foreign Exchange%n", "Close an Account%n", "Exit%n" };
 	public static final String MSG_PROMPT = "%nEnter choice: ";
 
-	// Declare streams to accept user input / provide output
+	// Declare streams to accept user input/provide output
 	InputStream in;
 	OutputStream out;
 
 	// Constructor
-	public MainBank(InputStream in, OutputStream out) {
-		this.in = in;
-		this.out = out;
-		this.exchangeRates = new HashMap<>();
-	}
+	private Map<String, String> config;
+
+    public MainBank(InputStream in, OutputStream out, Map<String, String> config) {
+        this.in = in;
+        this.out = out;
+        this.exchangeRates = new HashMap<>();
+
+        this.config = config;
+    }
 
 	// Main method.
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
-		new MainBank(System.in, System.out).run();
+        try {
+            Map<String, String> config = readConfig();
+            new MainBank(System.in, System.out, config).run();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
+    private static Map<String, String> readConfig() throws IOException {
+        Map<String, String> config = new HashMap<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(CONFIG_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] tokens = line.split("=");
+                if (tokens.length == 2) {
+                    config.put(tokens[0].trim(), tokens[1].trim());
+                }
+            }
+        }
+        return config;
+    }
 
-	private void loadExchangeRate() throws IOException {
-		try {
-			BufferedReader inputStream = new BufferedReader(new FileReader(EXCHANGE_RATE_FILE));
-			String line = null;
-			do {
-				line = inputStream.readLine();
-				if (line != null) {
-					String[] tokens = line.split(",");
-					exchangeRates.put(tokens[0], new Exchange(tokens[0], tokens[1], Double.parseDouble(tokens[2])));
-				}
-			} while (line != null);
-			inputStream.close();
-			exchangeFileLoaded = true;
+    private void loadExchangeRate() throws IOException, InterruptedException {
+        if (!Boolean.parseBoolean(config.get(SUPPORT_CURRENCIES_KEY))) {
+            return;
+        }
 
-		} catch (FileNotFoundException ex) {
-			exchangeFileLoaded = false;
-			out.write(("** Currency file could not be loaded, " + "Currency Conversion Service and "
-					+ "Foreign Currency accounts are not available **\n").toString().getBytes());
-		}
-	}
+        try {
+            String content;
 
+            if (config.get(CURRENCIES_SOURCE_KEY).equals("webservice")) {
+                content = fetchExchangeRates(config.get(WEBSERVICE_URL_KEY));
+            } else {
+                content = readFileContent(config.get(CURRENCY_FILE_KEY));
+            }
+
+        } catch (IOException ex) {
+            exchangeFileLoaded = false;
+            out.write(("** Currency file could not be loaded, " + "Currency Conversion Service and "
+                    + "Foreign Currency accounts are not available **\n").getBytes());
+        }
+    }
+
+    private static String readFileContent(String fileName) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+            }
+            return sb.toString();
+        }
+    }
+
+    private static String fetchExchangeRates(String url) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IOException("Failed to fetch exchange rates: " + response.statusCode());
+        }
+
+        return response.body();
+    }
 	// The core of the program responsible for providing user experience.
-	public void run() {
-		try {
-			loadExchangeRate();
-		} catch (IOException e1) {
-		}
+    public void run() {
+        try {
+            loadExchangeRate();
+        } catch (IOException | InterruptedException e1) {
 
 		Account acc;
 		int option = 0;
@@ -129,8 +186,8 @@ public class MainBank {
 					// provided in method arguments
 					try {
 						Bank.printAccountTransactions(ui.readInt(MSG_ACCOUNT_NUMBER), this.out);
-					} catch (NoSuchAccountException e1) {
-						this.handleException(ui, e1);
+					} catch (NoSuchAccountException e) {
+						this.handleException(ui, e);
 
 					}
 
@@ -139,8 +196,8 @@ public class MainBank {
 				case 5:
 					try {
 						Bank.printAccountInformation(ui.readInt(MSG_ACCOUNT_NUMBER), this.out);
-					} catch (NoSuchAccountException e1) {
-						this.handleException(ui, e1);
+					} catch (NoSuchAccountException e2) {
+						this.handleException(ui, e2);
 
 					}
 
@@ -220,6 +277,7 @@ public class MainBank {
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
 
 		}
 	}
