@@ -3,11 +3,19 @@ public class Exchange {
 	private String currency;
 	private String name;
 	private double rate;
+	private double buyRate;
+	private double sellRate;
 
 	public Exchange(String currency, String name, double rate) {
 		this.currency = currency;
 		this.name = name;
 		this.rate = rate;
+		this.buyRate = buyRate;
+		this.sellRate = sellRate;
+	}
+
+	public Exchange(double buyRate2, double sellRate2) {
+
 	}
 
 	public double currentToUSD(double amount) {

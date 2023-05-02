@@ -8,17 +8,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class MainBank {
-	// Cannot find location/dir of config.txt/ other files
 
-	// All messages are declared as constants to make it easier to change. Also, to
-	// ensure future proofing in case the application need to be made available
-	// in more than one languages
-	public static final String CONFIG_FILE = "config.txt";
-    public static final String SUPPORT_CURRENCIES_KEY = "support.currencies";
-    public static final String CURRENCIES_SOURCE_KEY = "currencies.source";
-    public static final String WEBSERVICE_URL_KEY = "webservice.url";
-    public static final String CURRENCY_FILE_KEY = "currency.file";
-    
+	public static final String CONFIG_FILE = "/Users/headhoncho/Library/Mobile Documents/com~apple~TextEdit/Documents/config.txt";
+	public static final String SUPPORT_CURRENCIES_KEY = "support.currencies";
+	public static final String CURRENCIES_SOURCE_KEY = "currencies.source";
+	public static final String WEBSERVICE_URL_KEY = "webservice.url";
+	public static final String CURRENCY_FILE_KEY = "currency.file";
+
 	public static final String MSG_ACCOUNT_OPENED = "%nAccount opened, account number is: %s%n%n";
 	public static final String MSG_ACCOUNT_CLOSED = "%nAccount number %s has been closed, balance is %s%n%n";
 	public static final String MSG_ACCOUNT_NOT_FOUND = "%nAccount number %s not found! %n%n";
@@ -33,12 +29,12 @@ public class MainBank {
 	public static final String MSG_ACCOUNT_NUMBER = "Enter account number: ";
 	public static final String MSG_ACCOUNT_ACTION = "%n%s was %s, account balance is: %s%n%n";
 
-	public static final String EXCHANGE_RATE_FILE = "exchange-rate.csv";
+	public static final String EXCHANGE_RATE_FILE = "/Users/headhoncho/git/CSC123-Bank/CSC123-Bank-Project/Bank/exchange-rate.csv";
 	private static final String MSG_CURRENCY_SELLING = "The currency you are selling: ";
 	private static final String MSG_AMOUNT_SELLING = "The amount you are selling: ";
 	private static final String MSG_CURRENCY_BUYING = "The currency you are buying: ";
 	private static final String MSG_EXCHANGE_ACTION = "The exchange rate is %s and you will get %s %s%n";
-	private static final String MSG_EXCHANGE_INVALID = "One of the currency should be USD";
+	private static final String MSG_EXCHANGE_INVALID = "One of the currency should be USD%n%n";
 	private static final String ACCOUNTS_FILE = "accounts.ser";
 
 	public static Map<String, Exchange> exchangeRates;
@@ -57,91 +53,93 @@ public class MainBank {
 	// Constructor
 	private Map<String, String> config;
 
-    public MainBank(InputStream in, OutputStream out, Map<String, String> config) {
-        this.in = in;
-        this.out = out;
-        this.exchangeRates = new HashMap<>();
+	public MainBank(InputStream in, OutputStream out, Map<String, String> config) {
+		this.in = in;
+		this.out = out;
+		this.exchangeRates = new HashMap<>();
 
-        this.config = config;
-    }
+		this.config = config;
+	}
 
 	// Main method.
-    public static void main(String[] args) {
+	public static void main(String[] args) {
 
-        try {
-            Map<String, String> config = readConfig();
-            new MainBank(System.in, System.out, config).run();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+		try {
+			Map<String, String> config = readConfig();
+			new MainBank(System.in, System.out, config).run();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-    }
-    private static Map<String, String> readConfig() throws IOException {
-        Map<String, String> config = new HashMap<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(CONFIG_FILE))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] tokens = line.split("=");
-                if (tokens.length == 2) {
-                    config.put(tokens[0].trim(), tokens[1].trim());
-                }
-            }
-        }
-        return config;
-    }
+	}
 
-    private void loadExchangeRate() throws IOException, InterruptedException {
-        if (!Boolean.parseBoolean(config.get(SUPPORT_CURRENCIES_KEY))) {
-            return;
-        }
+	private static Map<String, String> readConfig() throws IOException {
+		Map<String, String> config = new HashMap<>();
+		try (BufferedReader br = new BufferedReader(new FileReader(CONFIG_FILE))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] tokens = line.split("=");
+				if (tokens.length == 2) {
+					config.put(tokens[0].trim(), tokens[1].trim());
+				}
+			}
+		}
+		return config;
+	}
 
-        try {
-            String content;
+	private void loadExchangeRate() throws IOException, InterruptedException {
+		if (!Boolean.parseBoolean(config.get(SUPPORT_CURRENCIES_KEY))) {
+			return;
+		}
 
-            if (config.get(CURRENCIES_SOURCE_KEY).equals("webservice")) {
-                content = fetchExchangeRates(config.get(WEBSERVICE_URL_KEY));
-            } else {
-                content = readFileContent(config.get(CURRENCY_FILE_KEY));
-            }
+		try {
+			String content;
 
-        } catch (IOException ex) {
-            exchangeFileLoaded = false;
-            out.write(("** Currency file could not be loaded, " + "Currency Conversion Service and "
-                    + "Foreign Currency accounts are not available **\n").getBytes());
-        }
-    }
+			if (config.get(CURRENCIES_SOURCE_KEY).equals("webservice")) {
+				content = fetchExchangeRates(config.get(WEBSERVICE_URL_KEY));
+			} else {
+				content = readFileContent(config.get(CURRENCY_FILE_KEY));
+			}
 
-    private static String readFileContent(String fileName) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
-            }
-            return sb.toString();
-        }
-    }
+		} catch (IOException ex) {
+			exchangeFileLoaded = false;
+			out.write(("** Currency file could not be loaded, " + "Currency Conversion Service and "
+					+ "Foreign Currency accounts are not available **\n").getBytes());
+		}
+	}
 
-    private static String fetchExchangeRates(String url) throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .build();
+	private static String readFileContent(String fileName) throws IOException {
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+				sb.append(System.lineSeparator());
+			}
+			return sb.toString();
+		}
+	}
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+	private static String fetchExchangeRates(String url) throws IOException, InterruptedException {
+		HttpClient client = HttpClient.newHttpClient();
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
 
-        if (response.statusCode() != 200) {
-            throw new IOException("Failed to fetch exchange rates: " + response.statusCode());
-        }
+		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        return response.body();
-    }
+		if (response.statusCode() != 200) {
+			throw new IOException("Failed to fetch exchange rates: " + response.statusCode());
+		}
+
+		return response.body();
+	}
+
 	// The core of the program responsible for providing user experience.
-    public void run() {
-        try {
-            loadExchangeRate();
-        } catch (IOException | InterruptedException e1) {
+	public void run() {
+
+		try {
+			loadExchangeRate();
+		} catch (IOException | InterruptedException e1) {
+		}
 
 		Account acc;
 		int option = 0;
@@ -280,7 +278,6 @@ public class MainBank {
 			e.printStackTrace();
 		}
 
-		}
 	}
 
 	private void handleException(UIManager ui, Exception e) throws IOException {
