@@ -1,12 +1,17 @@
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Properties;
 import java.util.TreeMap;
 
 public class Bank {
 
-	private static Map<Integer, Account> accounts = new TreeMap<Integer, Account>();
+    private static final String CONFIG_FILE = "config.txt";
+    private static Map<Integer, Account> accounts = new TreeMap<>();
+    private static Map<String, Exchange> exchangeRates = new HashMap<>();
 
 	public static Account openCheckingAccount(String firstName, String lastName, String ssn, String currency,
 			double overdraftLimit) {
@@ -71,14 +76,45 @@ public class Bank {
 		return accounts;
 	}
 
-	public static void printAccountTransactions(int accountNumber, OutputStream out)
-			throws IOException, NoSuchAccountException {
-
-		lookup(accountNumber).printTransactions(out);
-	}
-
 	public static void printAccountInformation(int accountNumber, OutputStream out)
 			throws IOException, NoSuchAccountException {
-		lookup(accountNumber).printInformation(out);
+		lookup(accountNumber).printTransactions(out);
+	}
+	
+	public static void printAccountTransactions(int accountNumber, OutputStream out)
+	        throws IOException, NoSuchAccountException {
+	    lookup(accountNumber).printTransactions(out);
+	}
+
+	private static void loadCurrencyData() {
+	    Properties config = new Properties();
+	    try {
+	        config.load(new FileInputStream(CONFIG_FILE));
+
+	        String supportCurrencies = config.getProperty("support.currencies");
+	        if ("true".equalsIgnoreCase(supportCurrencies)) {
+	            String source = config.getProperty("currencies.source");
+	            ExchangeRateReader reader;
+
+	            if ("file".equalsIgnoreCase(source)) {
+	                String filename = config.getProperty("currency.file");
+	                reader = new FileExchangeRateReader(filename);
+	            } else { 
+	                String url = config.getProperty("webservice.url");
+	                reader = new HttpExchangeRateReader(url);
+	            }
+
+	            try {
+	                exchangeRates = reader.getExchangeRates();
+	            } catch (IOException e) {
+	                System.err.println("Error reading exchange rates: " + e.getMessage());
+	            }
+	        }
+	    } catch (IOException e) {
+	        System.err.println("Error loading configuration: " + e.getMessage());
+	    }
+	}	
+	static {
+	    loadCurrencyData();
 	}
 }

@@ -14,7 +14,7 @@ public class Account implements Serializable {
 	private boolean open = true;
 	private int accountNumber;
 
-	protected Account(String name, String currency, Customer customer) {
+	public Account(String name, String currency, Customer customer) {
 		accountName = name;
 		accountHolder = customer;
 		this.currency = currency;
@@ -28,6 +28,10 @@ public class Account implements Serializable {
 
 	public Customer getAccountHolder() {
 		return accountHolder;
+	}
+
+	public String getAccountCurrency() {
+		return currency;
 	}
 
 	public double getBalance() {
@@ -107,17 +111,14 @@ public class Account implements Serializable {
 				.getBytes());
 		Exchange exchange = MainBank.exchangeRates.get(getAccountCurrency());
 		if (exchange != null) {
-			out.write(
-					("USD Balance: " + "USD" + " "
-							+ String.format("%.2f",
-									MainBank.exchangeRates.get(getAccountCurrency()).currentToUSD(getBalance()))
-							+ "\n").getBytes());
+			double usdAmount = exchange.currentToUSD(getBalance());
+			out.write(("USD Balance: " + String.format("%.2f", usdAmount) + "\n").getBytes());
 		} else {
-			out.write(("Error: currency cannot be converted to USD\n").getBytes());
+			out.write("No exchange rate available.\n".getBytes());
 		}
-	}
 
-	private String getAccountCurrency() {
-		return currency;
+		out.write(("Account Status: " + (isOpen() ? "Open" : "Closed") + "\n").getBytes());
+		out.flush();
 	}
 }
+					

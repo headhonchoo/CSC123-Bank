@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.simple.JSONObject;
+
 public class MainBank {
 
 	public static final String CONFIG_FILE = "/Users/headhoncho/Library/Mobile Documents/com~apple~TextEdit/Documents/config.txt";
@@ -63,7 +65,18 @@ public class MainBank {
 
 	// Main method.
 	public static void main(String[] args) {
+		
+		String apiUrl = "https://exchangeratesapi.io/"; 
+        String apiKey = "NZ987T5uR1YWSdXLKi10RS6IaB3h7gGv"; //Api key
+        ExchangeRateHook exchangeRateHook = new ExchangeRateHook(apiUrl, apiKey);
 
+        try {
+            JSONObject exchangeRates = exchangeRateHook.getExchangeRates();
+            System.out.println("Exchange rates: " + exchangeRates);
+        } catch (Exception e) {
+            System.err.println("Error fetching exchange rates: " + e.getMessage());
+        }
+	 
 		try {
 			Map<String, String> config = readConfig();
 			new MainBank(System.in, System.out, config).run();
@@ -87,50 +100,28 @@ public class MainBank {
 		return config;
 	}
 
-	private void loadExchangeRate() throws IOException, InterruptedException {
-		if (!Boolean.parseBoolean(config.get(SUPPORT_CURRENCIES_KEY))) {
-			return;
-		}
+	private void loadExchangeRate() throws IOException {
+	    if (!Boolean.parseBoolean(config.get(SUPPORT_CURRENCIES_KEY))) {
+	        return;
+	    }
 
-		try {
-			String content;
+	    ExchangeRateReader reader;
 
-			if (config.get(CURRENCIES_SOURCE_KEY).equals("webservice")) {
-				content = fetchExchangeRates(config.get(WEBSERVICE_URL_KEY));
-			} else {
-				content = readFileContent(config.get(CURRENCY_FILE_KEY));
-			}
+	    if (config.get(CURRENCIES_SOURCE_KEY).equals("webservice")) {
+	        reader = new HttpExchangeRateReader(config.get(WEBSERVICE_URL_KEY));
+	    } else {
+	        reader = new FileExchangeRateReader(config.get(CURRENCY_FILE_KEY));
+	    }
 
-		} catch (IOException ex) {
-			exchangeFileLoaded = false;
-			out.write(("** Currency file could not be loaded, " + "Currency Conversion Service and "
-					+ "Foreign Currency accounts are not available **\n").getBytes());
-		}
-	}
-
-	private static String readFileContent(String fileName) throws IOException {
-		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-			StringBuilder sb = new StringBuilder();
-			String line;
-			while ((line = br.readLine()) != null) {
-				sb.append(line);
-				sb.append(System.lineSeparator());
-			}
-			return sb.toString();
-		}
-	}
-
-	private static String fetchExchangeRates(String url) throws IOException, InterruptedException {
-		HttpClient client = HttpClient.newHttpClient();
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-
-		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-		if (response.statusCode() != 200) {
-			throw new IOException("Failed to fetch exchange rates: " + response.statusCode());
-		}
-
-		return response.body();
+	    try {
+	        Map<String, Exchange> content = reader.getExchangeRates();
+	       
+	        exchangeFileLoaded = true;  // set to true if successfully loaded
+	    } catch (IOException ex) {
+	        exchangeFileLoaded = false;
+	        out.write(("** Currency file could not be loaded, " + "Currency Conversion Service and "
+	                + "Foreign Currency accounts are not available **\n").getBytes());
+	    }
 	}
 
 	// The core of the program responsible for providing user experience.
@@ -138,7 +129,7 @@ public class MainBank {
 
 		try {
 			loadExchangeRate();
-		} catch (IOException | InterruptedException e1) {
+		} catch (IOException e1) {
 		}
 
 		Account acc;
@@ -158,10 +149,10 @@ public class MainBank {
 					// Compact statement to accept user input, open account, and print the result
 					// including the account number
 					ui.print(MSG_ACCOUNT_OPENED,
-							new Object[] { Bank.openCheckingAccount(ui.readToken(MSG_FIRST_NAME),
-									ui.readToken(MSG_LAST_NAME), ui.readToken(MSG_SSN),
-									exchangeFileLoaded ? ui.readToken(MSG_CURRENCY) : "USD",
-									ui.readDouble(MSG_ACCOUNT_OD_LIMIT)).getAccountNumber() });
+					        new Object[] { Bank.openCheckingAccount(ui.readToken(MSG_FIRST_NAME),
+					                ui.readToken(MSG_LAST_NAME), ui.readToken(MSG_SSN),
+					                exchangeFileLoaded ? ui.readToken(MSG_CURRENCY) : "USD",
+					                ui.readDouble(MSG_ACCOUNT_OD_LIMIT)).getAccountNumber() });
 					break;
 				case 2:
 					// Compact statement to accept user input, open account, and print the result
